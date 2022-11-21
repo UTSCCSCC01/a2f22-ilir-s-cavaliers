@@ -86,4 +86,24 @@ public class Neo4jDAO {
         query = String.format(query, roadname1, roadname2);
         return this.session.run(query);
     }
+
+    public Result getShortestPath(String passLocation, String driveLocation){
+        String query = "MATCH (source:road {name: '%s'}), (target:road {name: '%s'})"+
+                       "CALL gds.shortestPath.dijkstra.stream({nodeProjection: 'road', relationshipProjection: 'ROUTE_TO', relationshipProperties: 'travel_time', sourceNode: source, targetNode: target, relationshipWeightProperty: 'travel_time})" +
+                       "YIELD index, sourceNode, nodeIds, targetNode, totalCost, costs, path" +
+                       "RETURN totalCost, costs, nodes(path) as path" +
+                       "ORDER BY index";
+        query = String.format(query, passLocation, driveLocation);
+        return this.session.run(query);
+    }//end getShortestPath
+
+    public Result getDriverWithinRadius(String passengerId, Double radius){
+        String query = "MATCH (n1:user {uid: '%s'}), (n2: user {is_driver:true})" +
+                       "WHERE point.distance(point({longitude: n1.longitude, latitude: n1.latitude}), point({longitude: n2.longitude, latitude: n2.latitude})) <= %f " +
+                       "RETURN n2 as drivers";
+        query = String.format(query, passengerId, radius);
+        return this.session.run(query);
+    }//end getDriverWithinRadius
+
+
 } 
