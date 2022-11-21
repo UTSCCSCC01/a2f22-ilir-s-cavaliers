@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/ApiGateway/ApiGateway.iml" filepath="$PROJECT_DIR$/ApiGateway/ApiGateway.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TripinfoMicroservice/TripInfoMicroservice.iml" filepath="$PROJECT_DIR$/TripinfoMicroservice/TripInfoMicroservice.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/a2f22-ilir-s-cavaliers.iml" filepath="$PROJECT_DIR$/.idea/a2f22-ilir-s-cavaliers.iml" />
+      <module fileurl="file://$PROJECT_DIR$/locationmicroservice/locationmicroservice.iml" filepath="$PROJECT_DIR$/locationmicroservice/locationmicroservice.iml" />
+      <module fileurl="file://$PROJECT_DIR$/UserMicroservice/usermicroservice.iml" filepath="$PROJECT_DIR$/UserMicroservice/usermicroservice.iml" />
+    </modules>
+  </component>
+</project>
