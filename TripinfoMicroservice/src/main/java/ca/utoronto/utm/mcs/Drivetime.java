@@ -6,13 +6,18 @@ package ca.utoronto.utm.mcs;
  * and/or recieve http requests from other microservices. Any other 
  * imports are fine.
  */
+import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URI;
 
+import com.mongodb.util.JSON;
 import com.sun.net.httpserver.HttpExchange;
+import org.bson.Document;
 import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 
 public class Drivetime extends Endpoint {
@@ -28,6 +33,59 @@ public class Drivetime extends Endpoint {
 
     @Override
     public void handleGet(HttpExchange r) throws IOException, JSONException {
-        // TODO
+        //obtaining the parameters
+        JSONObject body = new JSONObject(Utils.convert(r.getRequestBody()));
+
+        if (body.has("_id")) {
+            try {
+                //adding the trip to the db
+                Document responseDoc = this.dao.getTrip(body.getString("_id"));
+                if (responseDoc == null){ //the driver is not found
+                    this.sendStatus(r, 404);
+                    return;
+                }//end if
+
+                //our response object
+                JSONObject responseObject = new JSONObject(responseDoc.toJson().toString());
+
+                //sending an http request to our location microservice in navigation
+                String url = "http://locationmicroservice:8000/location/navigation/%s?passengerUid=%s";
+                url = String.format(url, responseObject.getString("driver"), responseObject.getString("passenger"));
+                HttpClient http_client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+
+                HttpResponse<InputStream> toLocation = http_client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                //if we receive nothing something went wrong
+                if (toLocation == null){
+                    this.sendStatus(r, 500);
+                    return;
+                }//end if
+
+                //if the response is not as wanted
+                if (toLocation.statusCode() != 200){
+                    this.sendResponse(r, null, toLocation.statusCode());
+                    return;
+                }//end if
+
+                //the result from the location microservice
+                JSONObject locationResponseObject = new JSONObject(Utils.convert(toLocation.body()));
+                JSONObject data = locationResponseObject.getJSONObject("data");
+                int totalTime = data.getInt("total_time");
+
+                //returning
+                JSONObject arrivalTime = new JSONObject();
+                arrivalTime.put("arrival_time", totalTime);
+
+                JSONObject returnObject = new JSONObject();
+                returnObject.put("data", arrivalTime);
+                returnObject.put("status", "OK");
+
+                this.sendResponse(r, returnObject, 200);
+            } catch (Exception e) { //something went wrong
+                this.sendStatus(r, 500);
+            }//end catch
+        } else { //invalid parameters
+            this.sendStatus(r, 400);
+        }//end else
     }
 }
