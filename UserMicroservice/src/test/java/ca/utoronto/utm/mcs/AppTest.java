@@ -12,7 +12,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue; //Warning says its unused but i used it???
 
 /**
  * Please write your tests in this class. 
