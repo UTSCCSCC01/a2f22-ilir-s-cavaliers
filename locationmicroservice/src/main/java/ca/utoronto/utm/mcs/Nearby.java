@@ -20,36 +20,40 @@ public class Nearby extends Endpoint {
     public void handleGet(HttpExchange r) throws IOException, JSONException {
 
         //Get the parameters
-        String [] parameters = r.getRequestURI().toString().split("\\?radius");
-
-        //Check if we got the right number of parameters
-        if (parameters.length != 2 || parameters[0].isEmpty() || parameters[1].isEmpty()){
+        String[] allParameters = r.getRequestURI().toString().split("/");
+        if (allParameters.length != 4 || allParameters[3].isEmpty()) {
             this.sendStatus(r, 400);
             return;
         }//end if
 
-        String passenger = parameters[0].split("/")[3];
-        int radius = Integer.parseInt(parameters[1]);
+        try {
+            String [] parameters = new String[2];
+            try{
+                parameters = allParameters[3].split("\\?radius=");
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                this.sendStatus(r, 400);
+            }//end catch
 
-        //if the radius is invalid
-        if (radius < 0 ){
-            this.sendStatus(r, 400);
-            return;
-        }//end if
+            //If time check that passenger is a passenger and not a driver
+            String passenger = parameters[0];
+            int radius = Integer.parseInt(parameters[1]);
 
-        Result passengerLocationRes = this.dao.getUserLocationByUid(passenger);
-        Double longitude, latitude;
-        if (passengerLocationRes.hasNext()){
-            Record passengerRes = passengerLocationRes.next();
-            longitude = passengerRes.get("n.longitude").asDouble();
-            latitude = passengerRes.get("n.latitude").asDouble();
-        }//end if
-        else { //this user doesn't exist
-            this.sendStatus(r, 404);
-            return;
-        }//end else
+            System.out.println(radius + passenger);
 
-        try{
+            //if the radius is invalid
+            if (radius < 0 ){
+                this.sendStatus(r, 400);
+                return;
+            }//end if
+
+            Result passengerLocationRes = this.dao.getUserLocationByUid(passenger);
+            if (!passengerLocationRes.hasNext()){
+                this.sendStatus(r, 404);
+                return;
+            }//end if
+
             Result driversRes = this.dao.getDriverWithinRadius(passenger, (double) radius);
             if (!driversRes.hasNext()){ //if there are no drivers we cannot find them
                 this.sendStatus(r, 404);
@@ -62,8 +66,8 @@ public class Nearby extends Endpoint {
                 JSONObject curDriverJSON = new JSONObject();
 
                 //adding info to our JSON object
-                curDriverJSON.put("longitude", curDriver.get("longitude").asString());
-                curDriverJSON.put("latitude", curDriver.get("latitude").asString());
+                curDriverJSON.put("longitude", curDriver.get("longitude").asFloat());
+                curDriverJSON.put("latitude", curDriver.get("latitude").asFloat());
                 curDriverJSON.put("street", curDriver.get("street").asString());
                 data.put(curDriver.get("uid").asString(), curDriverJSON);
             }//end while
@@ -72,8 +76,7 @@ public class Nearby extends Endpoint {
             result.put("data", data);
             result.put("status", "OK");
             this.sendResponse(r, result, 200);
-        }//end try
-        catch (Exception e){
+        }catch (Exception e){
             e.printStackTrace();
             this.sendStatus(r, 500);
         }//end catch
