@@ -135,5 +135,40 @@ public class AppTest {
         assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, result.statusCode());
     }//end tripConfirmPass
 
+    @Test
+    @Order(7)
+    public void patchTripPass() throws JSONException, IOException, InterruptedException {
+        JSONObject tripPatchBody = new JSONObject();
+        //I need distance, endTime, timeElapsed, totalCost 
+        tripPatchBody.put("distance", 69);
+        tripPatchBody.put("endTime", 69696969);
+        tripPatchBody.put("timeElapsed", "00:69:00");
+        tripPatchBody.put("timeCost", 69.69);
+
+        HttpResponse<String> confirmRes = sendRequest("/trip/"+tripId, "PATCH", tripPatchBody.toString());
+        assertEquals(200, confirmRes.statusCode());
+
+    }
+
+    @Test
+    @Order(8)
+    public void patchTripFail() throws JSONException, IOException, InterruptedException {
+        JSONObject tripPatchBody = new JSONObject();
+        //I need distance, endTime, timeElapsed, totalCost 
+        //Should fail cause incorrect body
+        tripPatchBody.put("Fired form twitter", 69);
+        tripPatchBody.put("endTime", 69696969);
+        tripPatchBody.put("timeElapsed", "00:69:00");
+        tripPatchBody.put("timeCost", 69.69);
+
+        HttpResponse<String> confirmRes = sendRequest("/trip/"+tripId, "PATCH", tripPatchBody.toString());
+        assertEquals(400, confirmRes.statusCode());
+
+    }
+
+    
+
+
+
 
 }//end AppTest

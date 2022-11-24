@@ -91,7 +91,7 @@ public class MongoDao {
 		return trip;
 	}
 
-	public boolean updateTrip(int endTime, String totalCost, int timeElapsed, int distance, ObjectId id){
+	public boolean updateTrip(int endTime, double totalCost, int timeElapsed, int distance, ObjectId id){
 		Document doc = new Document();
 		doc.put("distance", distance);
 		doc.put("endTime", endTime);

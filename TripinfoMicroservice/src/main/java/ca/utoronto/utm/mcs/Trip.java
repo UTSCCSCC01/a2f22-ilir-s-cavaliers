@@ -13,7 +13,7 @@ public class Trip extends Endpoint {
     /**
      * PATCH /trip/:_id
      * @param _id
-     * @body distance, endTime, timeElapsed, totalCost <---shouldn't we also get discount and driver payout?
+     * @body distance, endTime, timeElapsed, totalCost 
      * @return 200, 400, 404
      * Adds extra information to the trip with the given id when the 
      * trip is done. 
@@ -36,7 +36,7 @@ public class Trip extends Endpoint {
             }
 
             int distance, endTime, timeElapsed;
-            String totalCost;
+            double totalCost;
             String[] fields = {"distance", "endTime", "timeElapsed", "totalCost"};
             Class<?>[] fieldClasses = {Integer.class, Integer.class, Integer.class, String.class};
             JSONObject body = new JSONObject(Utils.convert(r.getRequestBody()));
@@ -48,7 +48,7 @@ public class Trip extends Endpoint {
             distance = body.getInt("distance");
             endTime = body.getInt("endTime");
             timeElapsed = body.getInt("timeElapsed");
-            totalCost = body.getString("totalCost");
+            totalCost = body.getDouble("totalCost");
 
             //try to update trip and store result
             boolean updateResult = this.dao.updateTrip(endTime, totalCost, timeElapsed, distance, new ObjectId(tripId));
