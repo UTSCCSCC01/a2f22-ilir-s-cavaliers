@@ -52,9 +52,10 @@ public class PostgresDAO {
         return rs.getInt("sum");
     }
 
+    //So someone explained the way SQL works very slowly, and if we just DONT put the uid, it should make one, and better than what I did.
     public int registerUser(String name, String email, String password) throws  SQLException {
-        String query = "INSERT INTO users(uid, password, email, prefer_name, rides, isdriver)"
-            + " VALUES('%s', '%s', '%s', '%s', 0, false)";
+        String query = "INSERT INTO users(password, email, prefer_name, rides, isdriver)"
+            + " VALUES('%s', '%s', '%s', 0, false)";
         query = String.format(query, getNewUID(), password, email, name);
         this.st.execute(query);
         ResultSet rs = getUserDataFromEmail(email);
