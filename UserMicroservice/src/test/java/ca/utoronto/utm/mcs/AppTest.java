@@ -22,7 +22,7 @@ public class AppTest {
 
     @Test
     @Order(1)
-    public void registerSucess() {
+    public void userRegisterPass() {
         try {
             HttpClient client = HttpClient.newHttpClient();
             String body = "{\"name\": \"kia\", \"email\": \"kiaEmail\", \"password\": \"12345\"}";
@@ -43,7 +43,7 @@ public class AppTest {
 
     @Test
     @Order(2) 
-    public void registerFail() {
+    public void userRegisterFail() {
         //Reason for fail is bad body (missing email/passowrd)
         //Should fail regardless of implementation
         try {
@@ -66,7 +66,7 @@ public class AppTest {
 
     @Test
     @Order(3)
-    public void loginPass() {
+    public void userLoginPass() {
         try {
             //First registers a new client
             HttpClient client = HttpClient.newHttpClient();
@@ -97,7 +97,7 @@ public class AppTest {
 
     @Test
     @Order(4)
-    public void loginFail() {
+    public void userLoginFail() {
         try {
             //Reason for fail is bad body (missing: passowrd)
              //Should fail regardless of implementation
