@@ -26,7 +26,7 @@ public class MongoDao {
 	public MongoCollection<Document> collection;
 	private final String username = "root";
 	private final String password = "123456";
-	private final String dbName = "todos"; //not too sure what this should be yet
+	private final String dbName = "trips";
 
 	public MongoDao() {
 		Dotenv dotenv = Dotenv.load();
