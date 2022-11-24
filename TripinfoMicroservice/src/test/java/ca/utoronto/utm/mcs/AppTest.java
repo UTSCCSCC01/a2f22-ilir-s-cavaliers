@@ -21,7 +21,7 @@ import java.net.http.HttpResponse;
  
 public class AppTest {
 
-    final static String API_URL = "http://localhost:8000";
+    final static String API_URL = "http://localhost:8002";
     String tripId;
 
     private static HttpResponse<String> sendRequest(String endpoint, String method, String body) throws InterruptedException, IOException, IOException {
@@ -98,17 +98,19 @@ public class AppTest {
 
     @Test
     @Order(3)
-    public void driverTimePass() throws JSONException, IOException, InterruptedException {
+    public void driverTimePass() throws JSONException, IOException, InterruptedException { //this will fail since navigation is giving a starnge error
         createRouteTrip("RoadOne", "RoadTwo", 30);
+        JSONObject tripRequestBody = new JSONObject();
 
-        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime/"+tripId, "GET", "");
+        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime/"+tripId, "GET", tripRequestBody.toString());
         assertEquals(HttpURLConnection.HTTP_OK, confirmRes.statusCode());
     }//end tripConfirmPass
 
     @Test
     @Order(4)
-    public void driverTimeFail() throws JSONException, IOException, InterruptedException { //this will fail since navigation is giving a starnge error
-        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime", "GET", "");
+    public void driverTimeFail() throws JSONException, IOException, InterruptedException {
+        JSONObject tripRequestBody = new JSONObject();
+        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime", "GET", tripRequestBody.toString());
         assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, confirmRes.statusCode());
     }//end tripConfirmPass
 
