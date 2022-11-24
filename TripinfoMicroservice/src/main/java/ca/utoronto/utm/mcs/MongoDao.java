@@ -1,17 +1,22 @@
 package ca.utoronto.utm.mcs;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.management.Query;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -57,6 +62,24 @@ public class MongoDao {
 		return data;
 	}
 
+	public JSONArray getUserTrips(String uid, String type) throws JSONException {
+		//Filter for given type
+        FindIterable<Document> data = this.collection.find(Filters.eq(type,uid));
+        try {
+            JSONArray result = new JSONArray();
+			//iterate through trips
+            for (Document doc : data) {
+                doc.put("_id",doc.getObjectId("_id").toString());
+                doc.remove(type);
+                result.put(doc);
+            }
+            return result;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
 	public Document getTrip(String id) throws JSONException {
 		//getting the trip
 		Document trip = null;
@@ -66,6 +89,72 @@ public class MongoDao {
 			System.out.println("Error occurred");
 		}
 		return trip;
+	}
+
+	public boolean updateTrip(int endTime, String totalCost, int timeElapsed, int distance, ObjectId id){
+		Document doc = new Document();
+		doc.put("distance", distance);
+		doc.put("endTime", endTime);
+		doc.put("timeElapsed", timeElapsed);
+		doc.put("totalCost", totalCost);
+		try{
+			///If the trips doesnt exist return false
+			boolean exist = this.tripExists(id);
+			if(!exist){
+				return false;
+			}
+		}catch (Exception e) {
+			throw e;
+		}
+		try {
+			this.collection.updateOne(Filters.eq("_id", id), new Document("$set", doc));
+			return true;	//return true on successful update
+		}catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public boolean tripExists(ObjectId id){
+		//Filter for the id
+		FindIterable<Document> data = this.collection.find(Filters.eq("_id",id));
+		//iterate through the trips found
+			try {
+				JSONArray result = new JSONArray();
+				for (Document doc : data) {
+					doc.put("_id", doc.getObjectId("_id").toString());
+					result.put(doc);
+				}
+				//if no trips are found (empty array) return FALSE
+				if(result.length() == 0){
+					return false;
+				}
+				//otherwise TRUE
+				return true;
+			}catch (Exception e) {
+				throw e;
+			}
+		}
+
+
+	public ArrayList<String> tripInfo(ObjectId id) {
+		//Filter for id
+		FindIterable<Document> data = this.collection.find(Filters.eq("_id", id));
+		ArrayList<String> result = new ArrayList<>();
+		//iterate through trips
+		try {
+			for (Document doc : data) {
+				result.add(doc.getString("driver"));
+				result.add(doc.getString("passenger"));
+			}
+			return result;
+		}catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public void deleteAll(){
+		this.collection.deleteMany(new Document());
+		return;
 	}
 
 }
