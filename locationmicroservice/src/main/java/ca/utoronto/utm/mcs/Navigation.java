@@ -23,89 +23,98 @@ public class Navigation extends Endpoint {
 
     @Override
     public void handleGet(HttpExchange r) throws IOException, JSONException {
-
-        //Get the parameters
-        String[] allParameters = r.getRequestURI().toString().split("/");
-        if (allParameters.length != 4 || allParameters[3].isEmpty()) {
-            this.sendStatus(r, 400);
-            return;
-        }//end if
-
         try {
-            String [] parameters = new String[2];
-            try{
-                parameters = allParameters[3].split("\\?passengerUid=");
-            }
-            catch (Exception e){
-                e.printStackTrace();
+            String endpoint = r.getRequestURI().toString();
+            String[] params = endpoint.split("/");
+
+            if (params.length != 4) { //not the correct endpoint
                 this.sendStatus(r, 400);
-            }//end catch
-            String passenger_uid = parameters[1];
-            String driver_uid = parameters[0]; //need to check that the driver UID is of a driver
 
-            String passengerLocation, driverLocation;
+            } else {
+                String[] allParams = params[3].split("\\?");
 
-            Result passengerResult = this.dao.getUserLocationByUid(passenger_uid);
-            Result driverResult = this.dao.getUserLocationByUid(driver_uid);
-            if (passengerResult.hasNext() && driverResult.hasNext()) {
-                passengerLocation = passengerResult.next().get("n.street").asString();
-                driverLocation = driverResult.next().get("n.street").asString();
-            }//end if
-            else { //the result was not found, we did not find the user(s)
-                this.sendStatus(r, 404);
-                return;
+                if (allParams.length != 2) { //not correct number of params
+                    this.sendStatus(r, 400);
+                } else {
+                    //getting the params
+                    String driverUid = allParams[0];
+                    String payload = allParams[1];
+
+                    String[] uidParam = payload.split("=");
+
+                    if (uidParam.length != 2 || !uidParam[0].equals("passengerUid")) { //wrongly formated params
+                        this.sendStatus(r, 400);
+                    } else {
+
+                        String passengerUid = uidParam[1];
+
+                        //getting the locations of our users
+                        Result driverRes = this.dao.getUserLocationByUid(driverUid);
+                        Result passengerRes = this.dao.getUserLocationByUid(passengerUid);
+                        if (driverRes.hasNext() && passengerRes.hasNext()) {
+                            Record driver = driverRes.next();
+                            String driverLocation = driver.get("n.street").toString().replace("\"", "");
+                            Record passenger = passengerRes.next();
+                            String passengerLocation = passenger.get("n.street").toString().replace("\"", "");
+
+                            //Using our DAO method to find the shortest path
+                            Result pathResult = this.dao.getShortestPath(driverLocation, passengerLocation);
+                            if (pathResult.hasNext()) {
+                                Record pathRes = pathResult.next();
+
+                                //Getting all the values from the Query results
+                                Value streets = pathRes.get("nodes");
+                                Value hasTraffic = pathRes.get("nodesTraffic");
+                                Value travelTimes = pathRes.get("costs");
+                                int totalTime = pathRes.get("totalCost").asInt();
+                                Value routes = pathRes.get("relationships(path)");
+
+                                JSONObject status = new JSONObject();
+                                JSONObject body = new JSONObject();
+
+                                //Creating our data object
+                                ArrayList<JSONObject> fullPath = new ArrayList<>();
+
+                                //Adding the first route since the time should be 0 for it
+                                JSONObject route1 = new JSONObject();
+                                route1.put("street", streets.get(0).toString().replace("\"", ""));
+                                route1.put("has_traffic", hasTraffic.get(0).asBoolean());
+                                route1.put("time", 0);
+                                fullPath.add(route1);
+
+                                //Loop through the rest of the data and add to our fullPath object
+                                for (int i = 0; i < routes.size(); i++) {
+                                    JSONObject bodyData = new JSONObject();
+                                    bodyData.put("street", streets.get(i + 1).toString().replace("\"", ""));
+                                    bodyData.put("has_traffic", hasTraffic.get(i + 1).asBoolean());
+                                    bodyData.put("time", routes.get(i).asRelationship().get("cost").asInt());
+                                    fullPath.add(bodyData);
+                                }//end for
+
+                                body.put("total_time", totalTime);
+                                body.put("route", fullPath);
+
+                                status.put("status", errorMap.get(200));
+                                status.put("data", body);
+
+                                sendResponse(r, status, 200);
+                            } else {
+                                sendStatus(r, 404);
+                            }//end else
+                        } else {
+                            sendStatus(r, 404);
+                        }//end else
+
+                    }//end else
+
+                }//end else
+
             }//end else
 
-            //check that the location is available
-            if (passengerLocation == null || driverLocation == null) {
-                this.sendStatus(r, 404);
-                return;
-            }//end if
-
-            //Get the shortest path
-            List<Record> shortestPathRes = this.dao.getShortestPath(passengerLocation, driverLocation).list();
-            //check if we got results
-            if (shortestPathRes == null || shortestPathRes.isEmpty()) {
-                this.sendStatus(r, 404);
-                return;
-            }//end if
-
-            //format total time received
-            Double total_cost = shortestPathRes.get(0).get(0).asDouble();
-            List<?> costs = shortestPathRes.get(0).get(1).asList();
-            List<Double> eachCost = new ArrayList<>();
-            for (Object cost : costs) { //for each cost we add it to our list
-                eachCost.add((double) cost);
-            }//end for
-
-            Value path = shortestPathRes.get(0).get(2);
-            JSONArray fullPath = new JSONArray();
-            Double previousCost = 0.0;
-
-            //for each node in the path add to our JSONArray
-            for (int i = 0; i < path.asList().size(); i++) {
-                JSONObject currentPathLocation = new JSONObject();
-                currentPathLocation.put("street", path.get(i).get("name").asString());
-                currentPathLocation.put("time", eachCost.get(i) - previousCost);
-                currentPathLocation.put("has_traffic", path.get(i).get("has_traffic").asString());
-
-                fullPath.put(currentPathLocation);
-                previousCost = eachCost.get(i);
-            }//end for
-
-            //Create our result which we're sending
-            JSONObject result = new JSONObject();
-            JSONObject data = new JSONObject();
-
-            data.put("total_time", total_cost);
-            data.put("route", fullPath);
-            result.put("data", data);
-            result.put("status", "OK");
-
-            this.sendResponse(r, result, 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            this.sendStatus(r, 500);
-        }//end catch
-    }
-}
+            sendStatus(r, 500);
+        }//end try catch
+
+    }//end handleGet method
+
+}//end Navigation class

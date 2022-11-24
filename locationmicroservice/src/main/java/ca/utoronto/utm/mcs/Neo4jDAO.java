@@ -2,6 +2,7 @@ package ca.utoronto.utm.mcs;
 
 import org.neo4j.driver.*;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.neo4j.driver.Record;
 
 public class Neo4jDAO {
 
@@ -87,13 +88,29 @@ public class Neo4jDAO {
         return this.session.run(query);
     }
 
+    public void createGraph() {
+        String query = "CALL gds.graph.exists('myGraph')";
+        Result existsRes = this.session.run(query);
+        if (existsRes.hasNext()) { //if the graph exists we drop it
+            Record exists = existsRes.next();
+            if(exists.get("exists").asBoolean()) {
+                query = "CALL gds.graph.drop('myGraph')";
+                this.session.run(query);
+            }//end if
+        }//end if
+
+        // Next, create myGraph
+        query = "CALL gds.graph.project('myGraph', 'road', 'ROUTE_TO', {relationshipProperties: 'travel_time'})";
+        this.session.run(query);
+    }//end else
+
     public Result getShortestPath(String passLocation, String driveLocation){
-        String query = "MATCH (source:road {name: '%s'}), (target:road {name: '%s'})"+
-                       "CALL gds.shortestPath.dijkstra.stream({nodeProjection: 'road', relationshipProjection: 'ROUTE_TO', relationshipProperties: 'travel_time', sourceNode: source, targetNode: target, relationshipWeightProperty: 'travel_time})" +
-                       "YIELD index, sourceNode, nodeIds, targetNode, totalCost, costs, path" +
-                       "RETURN totalCost, costs, nodes(path) as path" +
-                       "ORDER BY index";
-        query = String.format(query, passLocation, driveLocation);
+        createGraph();
+        String query ="MATCH (source:road {name: '%s'}), (target:road {name: '%s'}) " +
+                      "CALL gds.shortestPath.dijkstra.stream('myGraph', {sourceNode: id(source), targetNode: id(target), relationshipWeightProperty: 'travel_time'}) " +
+                      "YIELD totalCost, nodeIds, costs, path " +
+                      "RETURN totalCost, [id IN nodeIds | gds.util.asNode(id).name] AS nodes, [id IN nodeIds | gds.util.asNode(id).has_traffic] AS nodesTraffic, costs, relationships(path);";
+        query = String.format(query,passLocation, driveLocation);
         return this.session.run(query);
     }//end getShortestPath
 
