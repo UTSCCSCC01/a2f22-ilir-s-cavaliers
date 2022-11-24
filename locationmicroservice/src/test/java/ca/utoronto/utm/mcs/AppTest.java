@@ -88,8 +88,8 @@ public class AppTest {
     public void getNavigationRoutePass() throws IOException, InterruptedException, JSONException {
         createRoute("RoadOne", "RoadTwo");
 
-        createUser("111", true, "RoadOne");
-        createUser("112", false, "RoadTwo");
+        createUser("111", false, "RoadOne");
+        createUser("112", true, "RoadTwo");
 
         String endpoint = String.format("/location/navigation/111?passengerUid=112");
         JSONObject obj = new JSONObject();
