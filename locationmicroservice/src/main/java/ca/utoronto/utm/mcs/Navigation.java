@@ -11,9 +11,10 @@ import org.neo4j.driver.Result;
 import org.neo4j.driver.Value;
 
 public class Navigation extends Endpoint {
-    
+
     /**
      * GET /location/navigation/:driverUid?passengerUid=:passengerUid
+     *
      * @param driverUid, passengerUid
      * @return 200, 400, 404, 500
      * Get the shortest path from a driver to passenger weighted by the
@@ -24,42 +25,47 @@ public class Navigation extends Endpoint {
     public void handleGet(HttpExchange r) throws IOException, JSONException {
 
         //Get the parameters
-        String [] parameters = r.getRequestURI().toString().split("\\?passengerUid=");
-
-        //Check if the correct number of parameters were sent
-        if (parameters.length != 2){
+        String[] allParameters = r.getRequestURI().toString().split("/");
+        if (allParameters.length != 4 || allParameters[3].isEmpty()) {
             this.sendStatus(r, 400);
             return;
         }//end if
 
-        //Check the parameters NOT TOO SURE AB THIS PART JUST YET
-        String passenger_uid = parameters[1];
-        String driver_uid = parameters[0].split("/")[3];
-
-        String passengerLocation, driverLocation;
-
-        Result passengerResult = this.dao.getUserLocationByUid(passenger_uid);
-        Result driverResult = this.dao.getUserLocationByUid(driver_uid);
-        if (passengerResult.hasNext() && driverResult.hasNext()){
-            passengerLocation = passengerResult.next().get("n.street").asString();
-            driverLocation = driverResult.next().get("n.street").asString();
-        }//end if
-        else { //the result was not found so we did not find the user(s)
-            this.sendStatus(r, 404);
-            return;
-        }//end else
-
-        //check that the location is available
-        if (passengerLocation == null || driverLocation == null){
-            this.sendStatus(r, 404);
-            return;
-        }//end if
-
         try {
+            String [] parameters = new String[2];
+            try{
+                parameters = allParameters[3].split("\\?passengerUid=");
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                this.sendStatus(r, 400);
+            }//end catch
+            String passenger_uid = parameters[1];
+            String driver_uid = parameters[0]; //need to check that the driver UID is of a driver
+
+            String passengerLocation, driverLocation;
+
+            Result passengerResult = this.dao.getUserLocationByUid(passenger_uid);
+            Result driverResult = this.dao.getUserLocationByUid(driver_uid);
+            if (passengerResult.hasNext() && driverResult.hasNext()) {
+                passengerLocation = passengerResult.next().get("n.street").asString();
+                driverLocation = driverResult.next().get("n.street").asString();
+            }//end if
+            else { //the result was not found, we did not find the user(s)
+                this.sendStatus(r, 404);
+                return;
+            }//end else
+
+            //check that the location is available
+            if (passengerLocation == null || driverLocation == null) {
+                this.sendStatus(r, 404);
+                return;
+            }//end if
+
             //Get the shortest path
             List<Record> shortestPathRes = this.dao.getShortestPath(passengerLocation, driverLocation).list();
             //check if we got results
-            if (shortestPathRes == null || shortestPathRes.isEmpty()){
+            if (shortestPathRes == null || shortestPathRes.isEmpty()) {
                 this.sendStatus(r, 404);
                 return;
             }//end if
@@ -68,7 +74,7 @@ public class Navigation extends Endpoint {
             Double total_cost = shortestPathRes.get(0).get(0).asDouble();
             List<?> costs = shortestPathRes.get(0).get(1).asList();
             List<Double> eachCost = new ArrayList<>();
-            for (Object cost: costs) { //for each cost we add it to our list
+            for (Object cost : costs) { //for each cost we add it to our list
                 eachCost.add((double) cost);
             }//end for
 
@@ -91,16 +97,15 @@ public class Navigation extends Endpoint {
             JSONObject result = new JSONObject();
             JSONObject data = new JSONObject();
 
-            result.put("status", "OK");
             data.put("total_time", total_cost);
             data.put("route", fullPath);
             result.put("data", data);
+            result.put("status", "OK");
 
             this.sendResponse(r, result, 200);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             this.sendStatus(r, 500);
         }//end catch
-
     }
 }
