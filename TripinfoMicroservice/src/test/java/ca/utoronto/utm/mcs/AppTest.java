@@ -3,6 +3,7 @@ package ca.utoronto.utm.mcs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Order;
@@ -156,7 +157,7 @@ public class AppTest {
         JSONObject tripPatchBody = new JSONObject();
         //I need distance, endTime, timeElapsed, totalCost 
         //Should fail cause incorrect body
-        tripPatchBody.put("Fired form twitter", 69);
+        tripPatchBody.put("Fired from twitter", 69);
         tripPatchBody.put("endTime", 69696969);
         tripPatchBody.put("timeElapsed", "00:69:00");
         tripPatchBody.put("timeCost", 69.69);
@@ -166,7 +167,73 @@ public class AppTest {
 
     }
 
-    
+    //So heads up, these trips have users that dont exist (Tests 9-12)
+    //the driver and passenger 
+    @Test
+    @Order(9)
+    public void tripsForPassengerPass() throws JSONException, IOException, InterruptedException{
+        JSONObject req = new JSONObject()
+                .put("driver", "mr.white")
+                .put("passenger", "jesse")
+                .put("startTime", 345);
+        HttpResponse<String> res = sendRequest("/trip/confirm", "POST", req.toString());
+
+
+        res = sendRequest("/trip/passenger/jesse", "GET", req.toString());
+        JSONArray trips = new JSONObject(res.body()).getJSONObject("data").getJSONArray("trips");
+        
+
+        assertTrue(res.statusCode()==HttpURLConnection.HTTP_OK);
+    }
+
+    @Test
+    @Order(10)
+    public void tripsForPassengerFail() throws JSONException, IOException, InterruptedException{
+        JSONObject req = new JSONObject()
+                .put("passenger", "L")
+                .put("startTime", 345);
+        HttpResponse<String> res = sendRequest("/trip/confirm", "POST", req.toString());
+
+
+        res = sendRequest("/trip/passenger/L", "GET", req.toString());
+        JSONArray trips = new JSONObject(res.body()).getJSONObject("data").getJSONArray("trips");
+
+
+        assertTrue(res.statusCode()==HttpURLConnection.HTTP_OK);
+    }
+
+    @Test
+    @Order(11)
+    public void tripsForDriverPass() throws JSONException, IOException, InterruptedException{
+        JSONObject req = new JSONObject()
+                .put("driver", "lannister")
+                .put("passenger", "stark")
+                .put("startTime", 345);
+        HttpResponse<String> res = sendRequest("/trip/confirm", "POST", req.toString());
+
+
+        res = sendRequest("/trip/driver/lannister", "GET", req.toString());
+        JSONArray trips = new JSONObject(res.body()).getJSONObject("data").getJSONArray("trips");
+        
+
+        assertTrue(res.statusCode()==HttpURLConnection.HTTP_OK);
+    }
+
+    @Test   //should fail, missing passenger
+    @Order(12)
+    public void tripsForDriverFail() throws JSONException, IOException, InterruptedException{
+        JSONObject req = new JSONObject()
+                .put("driver", "snow")
+                .put("startTime", 345);
+        HttpResponse<String> res = sendRequest("/trip/confirm", "POST", req.toString());
+
+
+        res = sendRequest("/trip/driver/snow", "GET", req.toString());
+        JSONArray trips = new JSONObject(res.body()).getJSONObject("data").getJSONArray("trips");
+        
+
+        assertTrue(res.statusCode()==HttpURLConnection.HTTP_OK);
+    }
 
 
 
