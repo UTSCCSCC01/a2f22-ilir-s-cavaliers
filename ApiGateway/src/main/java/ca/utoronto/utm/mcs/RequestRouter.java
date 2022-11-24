@@ -25,9 +25,9 @@ public class RequestRouter implements HttpHandler {
 		httpClient = HttpClient.newHttpClient();
 		allMicroService = new HashMap<String, String>();
 
-		allMicroService.put("locationmicroservice", "http://localhost:8000"); //location microservice
-		allMicroService.put("usermicroservice", "http://localhost:8001"); //user microservice
-		allMicroService.put("tripmicroservice", "http://localhost:8002"); //trip info microservice
+		allMicroService.put("location", "http://localhost:8000"); //location microservice
+		allMicroService.put("user", "http://localhost:8001"); //user microservice
+		allMicroService.put("trip", "http://localhost:8002"); //trip info microservice
 	}//end RequestRouter constructor
 
 	@Override
