@@ -33,6 +33,7 @@ public class AppTest {
         user.put("is_driver", isDriver);
         sendRequest("/location/user", "PUT", user.toString());
 
+        //this is not working not sure why since this is a given method/handler
         //add their location
         JSONObject userStreet = new JSONObject();
         userStreet.put("latitude", 0.0);
@@ -84,7 +85,7 @@ public class AppTest {
     }//end getNearbyDriverFail
 
     @Test
-    @Order(3) //this isn't working getting strange error in navigation
+    @Order(3) //Not working since something is going wrong when trying to add the road, when road is added properly the test passes
     public void getNavigationRoutePass() throws IOException, InterruptedException, JSONException {
         createRoute("RoadOne", "RoadTwo");
 

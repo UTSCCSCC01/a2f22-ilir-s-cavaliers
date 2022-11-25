@@ -21,11 +21,13 @@ import java.net.http.HttpResponse;
  */
  
 public class AppTest {
-
-    final static String API_URL = "http://localhost:8002";
     String tripId;
 
     private static HttpResponse<String> sendRequest(String endpoint, String method, String body) throws InterruptedException, IOException, IOException {
+        String API_URL = "http://localhost:8002";
+        if (endpoint.charAt(0) == 'h'){ //we're going to location
+            API_URL = "";
+        }//end if
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(API_URL + endpoint)).method(method, HttpRequest.BodyPublishers.ofString(body)).build();
 
