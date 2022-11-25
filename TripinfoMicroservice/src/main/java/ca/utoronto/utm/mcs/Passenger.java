@@ -19,6 +19,7 @@ public class Passenger extends Endpoint {
 
     @Override
     public void handleGet(HttpExchange r) throws IOException,JSONException{
+        
         //Send 400 on bad url
         String[] splitUrl = r.getRequestURI().getPath().split("/");
         if (splitUrl.length != 4){
@@ -41,10 +42,12 @@ public class Passenger extends Endpoint {
             JSONObject trips = new JSONObject();
             trips.put("trips", pTrips);
             var.put("data", trips);
-            this.sendResponse(r, var, 0);
+            this.sendResponse(r, var, 200);
          }catch(Exception e){
             e.printStackTrace();
-            this.sendStatus(r, 0);
+            this.sendStatus(r, 500);
          }
+         
     }
+    
 }

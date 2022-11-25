@@ -34,6 +34,7 @@ public class Drivetime extends Endpoint {
 
     @Override
     public void handleGet(HttpExchange r) throws IOException, JSONException {
+        
         //obtaining the parameters
         String[] allParameters = r.getRequestURI().toString().split("/");
         if (allParameters.length != 4 || allParameters[3].isEmpty()) {
@@ -44,7 +45,7 @@ public class Drivetime extends Endpoint {
         try {
             //adding the trip to the db
             Document responseDoc = this.dao.getTrip(allParameters[3]);
-            if (responseDoc == null) { //the driver is not found
+            if (responseDoc == null) { //the trip is not found
                 this.sendStatus(r, 404);
                 return;
             }//end if
@@ -88,5 +89,6 @@ public class Drivetime extends Endpoint {
         } catch (Exception e) { //something went wrong
             this.sendStatus(r, 500);
         }//end catch
+        
     }
 }

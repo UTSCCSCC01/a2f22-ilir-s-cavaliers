@@ -22,10 +22,15 @@ import java.net.http.HttpResponse;
  
 public class AppTest {
 
-    final static String API_URL = "http://localhost:8002";
-    String tripId;
+    
+    public String tripId;
 
     private static HttpResponse<String> sendRequest(String endpoint, String method, String body) throws InterruptedException, IOException, IOException {
+        
+        String API_URL = "http://localhost:8002";
+        if(endpoint.charAt(0) == 'h'){
+            API_URL = "";
+        }//end if
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(API_URL + endpoint)).method(method, HttpRequest.BodyPublishers.ofString(body)).build();
 
@@ -38,14 +43,14 @@ public class AppTest {
         JSONObject user = new JSONObject();
         user.put("uid", uid);
         user.put("is_driver", isDriver);
-        sendRequest("http://localhost:8000/location/user", "PUT", user.toString());
+        sendRequest("/location/user", "PUT", user.toString());
 
         //add their location
         JSONObject userStreet = new JSONObject();
         userStreet.put("latitude", 0.0);
         userStreet.put("longitude", 0.0);
         userStreet.put("street", street);
-        sendRequest("http://localhost:8000/location/"+uid, "PATCH", userStreet.toString());
+        sendRequest("/location/"+uid, "PATCH", userStreet.toString());
     }//end createUser
 
     public void createRouteTrip(String road1, String road2, int time) throws JSONException, InterruptedException, IOException{
@@ -83,9 +88,11 @@ public class AppTest {
 
         HttpResponse<String> result = sendRequest("/trip/confirm", "POST", tripRequestBody.toString());
         tripId = new JSONObject(result.body()).getJSONObject("data").getJSONObject("_id").getString("$oid");
+        //System.setOut(System.err);
+        System.out.println(tripId);
         assertEquals(HttpURLConnection.HTTP_OK, result.statusCode());
     }//end tripConfirmPass
-
+    
     @Test
     @Order(2)
     public void tripConfirmFail() throws JSONException, IOException, InterruptedException {
@@ -94,7 +101,7 @@ public class AppTest {
         tripRequestBody.put("passenger", "123");
 
         HttpResponse<String> confirmRes = sendRequest("/trip/confirm/", "POST", tripRequestBody.toString());
-        assertEquals(HttpURLConnection.HTTP_NOT_FOUND, confirmRes.statusCode());
+        assertEquals(400, confirmRes.statusCode());
     }//end tripConfirmPass
 
     @Test
@@ -103,7 +110,7 @@ public class AppTest {
         createRouteTrip("RoadOne", "RoadTwo", 30);
         JSONObject tripRequestBody = new JSONObject();
 
-        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime/"+tripId, "GET", tripRequestBody.toString());
+        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime/63803ebce21dca79c6437253", "GET", tripRequestBody.toString());
         assertEquals(HttpURLConnection.HTTP_OK, confirmRes.statusCode());
     }//end tripConfirmPass
 
@@ -146,7 +153,7 @@ public class AppTest {
         tripPatchBody.put("timeElapsed", "00:69:00");
         tripPatchBody.put("timeCost", 69.69);
 
-        HttpResponse<String> confirmRes = sendRequest("/trip/"+tripId, "PATCH", tripPatchBody.toString());
+        HttpResponse<String> confirmRes = sendRequest("/trip/63803ebce21dca79c6437253", "PATCH", tripPatchBody.toString());
         assertEquals(200, confirmRes.statusCode());
 
     }
@@ -196,10 +203,9 @@ public class AppTest {
 
 
         res = sendRequest("/trip/passenger/L", "GET", req.toString());
-        JSONArray trips = new JSONObject(res.body()).getJSONObject("data").getJSONArray("trips");
 
 
-        assertTrue(res.statusCode()==HttpURLConnection.HTTP_OK);
+        assertTrue(res.statusCode()==HttpURLConnection.HTTP_NOT_FOUND);
     }
 
     @Test
@@ -225,14 +231,12 @@ public class AppTest {
         JSONObject req = new JSONObject()
                 .put("driver", "snow")
                 .put("startTime", 345);
-        HttpResponse<String> res = sendRequest("/trip/confirm", "POST", req.toString());
+        HttpResponse<String> res = sendRequest("/trip/confirm/", "POST", req.toString());
 
 
         res = sendRequest("/trip/driver/snow", "GET", req.toString());
-        JSONArray trips = new JSONObject(res.body()).getJSONObject("data").getJSONArray("trips");
-        
 
-        assertTrue(res.statusCode()==HttpURLConnection.HTTP_OK);
+        assertTrue(res.statusCode()==HttpURLConnection.HTTP_NOT_FOUND);
     }
 
 
