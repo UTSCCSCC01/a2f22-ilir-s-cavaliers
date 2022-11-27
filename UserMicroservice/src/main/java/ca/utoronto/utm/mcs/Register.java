@@ -37,16 +37,13 @@ public class Register extends Endpoint {
             //Validate and check the stuff in body
             //Listen ik i didn't check the name like i did email and password but these ifs are long enough man 
             String[] field = {"name", "email", "password"};
-            Class<?>[] bodyTypes = {String.class, String.class};
+            Class<?>[] bodyTypes = {String.class, String.class, String.class};
             if (validateFields(deserialized, field, bodyTypes)) {
-                if (deserialized.has("email") && deserialized.has("password")){
-                    if(deserialized.get("email").getClass() == String.class 
-                    && deserialized.get("password").getClass() == String.class){
                         name = deserialized.getString("name");
                         email = deserialized.getString("email");
                         password = deserialized.getString("password");
-                    }
-                }
+                    
+                
             }  else {//400 if any fields were wrong or validation fails
                 this.sendStatus(r, 400);
                 return;
@@ -63,7 +60,7 @@ public class Register extends Endpoint {
                 resp.put("uid", String.valueOf(uid));
                 this.sendResponse(r, resp, 200); //200 on success
             } else {
-                this.sendStatus(r, 409);
+                this.sendStatus(r, 403);
                 return;
             }
             

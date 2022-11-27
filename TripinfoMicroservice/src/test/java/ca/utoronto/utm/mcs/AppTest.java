@@ -110,7 +110,7 @@ public class AppTest {
         createRouteTrip("RoadOne", "RoadTwo", 30);
         JSONObject tripRequestBody = new JSONObject();
 
-        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime/63803ebce21dca79c6437253", "GET", tripRequestBody.toString());
+        HttpResponse<String> confirmRes = sendRequest("/trip/driverTime/" + tripId, "GET", tripRequestBody.toString());
         assertEquals(HttpURLConnection.HTTP_OK, confirmRes.statusCode());
     }//end tripConfirmPass
 

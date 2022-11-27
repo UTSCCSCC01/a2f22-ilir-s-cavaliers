@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue; //Warning says its un
 
  
 public class AppTest {
+    
     @BeforeAll
 public static void init()throws IOException {
    // Runtime.getRuntime().exec("mvn exec:java");
@@ -39,15 +40,16 @@ public static void teardown() throws IOException, InterruptedException {
     public void userRegisterPass() {
         try {
             HttpClient client = HttpClient.newHttpClient();
-            String body = "{\"name\": \"kia\", \"email\": \"kiaEmail\", \"password\": \"12345\"}";
+            String body = "{\"name\": \"kia\", \"email\": \"kiaemail\", \"password\": \"12345\"}";
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8001/user/register"))
                 .header("Content-Type", "application/json")
                 .method("POST", BodyPublishers.ofString(body))
                 .build();
-            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-            System.out.println("registerSuccess: " + response.statusCode() + response.body());
-            assertTrue(response.statusCode()==200);
+            HttpResponse<String> result = client.send(request, BodyHandlers.ofString());
+            //System.out.println("registerSuccess: " + response.statusCode() + response.body());
+           // System.out.println(result.statusCode());
+            assertEquals(200, result.statusCode());
         }
         catch (Exception e){
             System.out.println(e.getMessage());
@@ -89,6 +91,9 @@ public static void teardown() throws IOException, InterruptedException {
                 .method("POST", BodyPublishers.ofString(body1))
                 .build();
             client.send(request1, BodyHandlers.ofString());
+            //check if inserted correctly
+            HttpResponse<String> response1 = client.send(request1, BodyHandlers.ofString());
+           // assertEquals(200, response1.statusCode());
 
             //now tries to log in
             String body2 = "{\"email\": \"nicolemail\", \"password\": \"12345\"}";
@@ -97,9 +102,9 @@ public static void teardown() throws IOException, InterruptedException {
                 .header("Content-Type", "application/json")
                 .method("POST", BodyPublishers.ofString(body2))
                 .build();
-            HttpResponse<String> response = client.send(request2, BodyHandlers.ofString());
-            System.out.println("loginPass: " + response.statusCode() + response.body());
-            assertTrue(response.statusCode()==200);
+            HttpResponse<String> response2 = client.send(request2, BodyHandlers.ofString());
+            //System.out.println("loginPass: " + response.statusCode() + response.body());
+            assertEquals(200, response2.statusCode());
         }
         catch (Exception e){
             System.out.println(e.getMessage());
